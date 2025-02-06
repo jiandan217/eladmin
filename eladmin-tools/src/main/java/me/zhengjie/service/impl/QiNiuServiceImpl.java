@@ -1,5 +1,5 @@
 /*
- *  Copyright 2019-2020 Zheng Jie
+ *  Copyright 2019-2025 Zheng Jie
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package me.zhengjie.service.impl;
 
-import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson2.JSON;
 import com.qiniu.common.QiniuException;
 import com.qiniu.http.Response;
 import com.qiniu.storage.BucketManager;
@@ -29,14 +29,10 @@ import me.zhengjie.domain.QiniuConfig;
 import me.zhengjie.domain.QiniuContent;
 import me.zhengjie.repository.QiniuContentRepository;
 import me.zhengjie.service.dto.QiniuQueryCriteria;
-import me.zhengjie.utils.QiNiuUtil;
+import me.zhengjie.utils.*;
 import me.zhengjie.exception.BadRequestException;
 import me.zhengjie.repository.QiNiuConfigRepository;
 import me.zhengjie.service.QiNiuService;
-import me.zhengjie.utils.FileUtil;
-import me.zhengjie.utils.PageUtil;
-import me.zhengjie.utils.QueryHelp;
-import me.zhengjie.utils.ValidationUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CachePut;
@@ -84,7 +80,7 @@ public class QiNiuServiceImpl implements QiNiuService {
     }
 
     @Override
-    public Object queryAll(QiniuQueryCriteria criteria, Pageable pageable){
+    public PageResult<QiniuContent> queryAll(QiniuQueryCriteria criteria, Pageable pageable){
         return PageUtil.toPage(qiniuContentRepository.findAll((root, criteriaQuery, criteriaBuilder) -> QueryHelp.getPredicate(root,criteria,criteriaBuilder),pageable));
     }
 
@@ -123,7 +119,7 @@ public class QiNiuServiceImpl implements QiNiuService {
                 qiniuContent.setType(qiniuConfig.getType());
                 qiniuContent.setKey(FileUtil.getFileNameNoEx(putRet.key));
                 qiniuContent.setUrl(qiniuConfig.getHost()+"/"+putRet.key);
-                qiniuContent.setSize(FileUtil.getSize(Integer.parseInt(file.getSize()+"")));
+                qiniuContent.setSize(FileUtil.getSize(Integer.parseInt(String.valueOf(file.getSize()))));
                 return qiniuContentRepository.save(qiniuContent);
             }
             return content;
@@ -194,7 +190,7 @@ public class QiNiuServiceImpl implements QiNiuService {
             for (FileInfo item : items) {
                 if(qiniuContentRepository.findByKey(FileUtil.getFileNameNoEx(item.key)) == null){
                     qiniuContent = new QiniuContent();
-                    qiniuContent.setSize(FileUtil.getSize(Integer.parseInt(item.fsize+"")));
+                    qiniuContent.setSize(FileUtil.getSize(Integer.parseInt(String.valueOf(item.fsize))));
                     qiniuContent.setSuffix(FileUtil.getExtensionName(item.key));
                     qiniuContent.setKey(FileUtil.getFileNameNoEx(item.key));
                     qiniuContent.setType(config.getType());
@@ -207,6 +203,7 @@ public class QiNiuServiceImpl implements QiNiuService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteAll(Long[] ids, QiniuConfig config) {
         for (Long id : ids) {
             delete(findByContentId(id), config);

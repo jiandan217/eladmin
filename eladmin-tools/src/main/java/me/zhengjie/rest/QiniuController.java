@@ -1,5 +1,5 @@
 /*
- *  Copyright 2019-2020 Zheng Jie
+ *  Copyright 2019-2025 Zheng Jie
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import me.zhengjie.domain.QiniuConfig;
 import me.zhengjie.domain.QiniuContent;
 import me.zhengjie.service.dto.QiniuQueryCriteria;
 import me.zhengjie.service.QiNiuService;
+import me.zhengjie.utils.PageResult;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -50,7 +51,7 @@ public class QiniuController {
     private final QiNiuService qiNiuService;
 
     @GetMapping(value = "/config")
-    public ResponseEntity<Object> queryQiNiuConfig(){
+    public ResponseEntity<QiniuConfig> queryQiNiuConfig(){
         return new ResponseEntity<>(qiNiuService.find(), HttpStatus.OK);
     }
 
@@ -71,11 +72,10 @@ public class QiniuController {
 
     @ApiOperation("查询文件")
     @GetMapping
-    public ResponseEntity<Object> queryQiNiu(QiniuQueryCriteria criteria, Pageable pageable){
+    public ResponseEntity<PageResult<QiniuContent>> queryQiNiu(QiniuQueryCriteria criteria, Pageable pageable){
         return new ResponseEntity<>(qiNiuService.queryAll(criteria,pageable),HttpStatus.OK);
     }
 
-    @Log("上传文件")
     @ApiOperation("上传文件")
     @PostMapping
     public ResponseEntity<Object> uploadQiNiu(@RequestParam MultipartFile file){
